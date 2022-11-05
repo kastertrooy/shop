@@ -1,5 +1,6 @@
 package com.example.demo.servise;
 
+import com.example.demo.entity.Profile;
 import com.example.demo.excaption.BadRequest;
 import org.slf4j.Logger;
 import io.jsonwebtoken.*;
@@ -82,5 +83,16 @@ public class JwtTokenFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
             return;
         }
+    }
+
+    public String createTokenForChangeEmail(Profile profile) {
+        JwtBuilder jwtBuilder = Jwts.builder();
+        jwtBuilder.setId("some Id");
+        jwtBuilder.setIssuedAt(new Date());
+        jwtBuilder.setSubject(String.format("%s,%s", profile.getId(), profile.getEmail()));
+        jwtBuilder.signWith(SignatureAlgorithm.HS256, jwtSecret);
+        jwtBuilder.setExpiration(new Date(System.currentTimeMillis() + (5 * 60 * 1000)));
+        jwtBuilder.setIssuer(issuer);
+        return jwtBuilder.compact();
     }
 }
