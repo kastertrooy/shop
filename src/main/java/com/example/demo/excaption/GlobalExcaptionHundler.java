@@ -5,7 +5,7 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
 @ControllerAdvice
-public class GlobalExcaption {
+public class GlobalExcaptionHundler {
     @ExceptionHandler
     public ResponseEntity<?>hundler(BadRequest excaption){
         return ResponseEntity.badRequest().body(excaption.getMessage());

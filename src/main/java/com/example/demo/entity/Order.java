@@ -8,6 +8,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import javax.persistence.*;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Getter
@@ -20,7 +21,7 @@ public class Order {
     private Integer id;
     private Integer profilId;
     private Integer productId;
-    private LocalDateTime deliveryData;
+    private LocalDate deliveryData;
     private String requirement;
     private String contact;
     private PaymentType payment_type;

@@ -5,30 +5,27 @@ import com.example.demo.entity.dto.ProfileDto;
 import com.example.demo.entity.update.ChangePassword;
 import com.example.demo.entity.update.EnterEmail;
 import com.example.demo.entity.update.UpdateProfile;
-import com.example.demo.servise.ProfilrService;
-import org.springframework.beans.factory.annotation.Value;
+import com.example.demo.servise.ProfileService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
-import javax.validation.constraints.Email;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
 import javax.websocket.server.PathParam;
 
-
+@Controller
 @RestController
 @RequestMapping("/api/v1/profile")
 public class ProfileController {
-private final ProfilrService profilrService;
+private final ProfileService profilrService;
 
-    public ProfileController(ProfilrService profilrService) {
+    public ProfileController(ProfileService profilrService) {
         this.profilrService = profilrService;
     }
 
-    @PostMapping("/new")
-    public ResponseEntity<?> newProfile(@RequestBody @Valid  CreateProfile profile){
+    @GetMapping("/new")
+    public ResponseEntity<?> newProfile(@RequestBody @Valid CreateProfile profile){
         String result = profilrService.createProfile(profile);
         return ResponseEntity.ok(result);
     }
@@ -37,9 +34,10 @@ private final ProfilrService profilrService;
         String result = profilrService.verification(token);
         return ResponseEntity.ok(result);
     }
-    @GetMapping("/info/{email}")
-    public ResponseEntity<?> info(@PathVariable("email") String email){
-        ProfileDto result = profilrService.infoByEmail(email);
+    @GetMapping("/info/{user||pass}")
+    public ResponseEntity<?> info(@PathVariable("user") String email,
+                                  @PathVariable("pass") String password){
+        ProfileDto result = profilrService.infoByEmail(email,password);
         return ResponseEntity.ok(result);
     }
     @PutMapping("/update/{id}")
@@ -66,4 +64,13 @@ private final ProfilrService profilrService;
         String result = profilrService.changePassword(email,changePassword);
         return ResponseEntity.ok(result);
     }
+
+
+    @PutMapping("/administration/{password}")
+    public ResponseEntity<?> changePassword(@PathVariable("password") String password,
+                                            @PathParam("id")Integer id  ){
+        String result = profilrService.administration(password,id);
+        return ResponseEntity.ok(result);
+    }
+
 }

@@ -1,6 +1,5 @@
 package com.example.demo.controller;
 
-import com.example.demo.entity.dto.ImageDto;
 import com.example.demo.excaption.BadRequest;
 import com.example.demo.servise.ImageService;
 import org.springframework.core.io.UrlResource;
@@ -9,22 +8,20 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
-
 @RestController
 @RequestMapping("/api/v1/image")
-public class ImageControllar {
+public class ImageController {
     private final ImageService imageService;
     
-    public ImageControllar(ImageService imageSearvice) {
+    public ImageController(ImageService imageSearvice) {
         this.imageService = imageSearvice;
     }
 
-    @PostMapping
+  /*  @PostMapping
     public String create (@RequestParam  MultipartFile file){
     return imageService.create(file);
     }
-
+*/
     @GetMapping("/load/{filename:.+}")
     public @ResponseBody ResponseEntity<?> saveFile(@PathVariable String filename){
         UrlResource file = imageService.load(filename);

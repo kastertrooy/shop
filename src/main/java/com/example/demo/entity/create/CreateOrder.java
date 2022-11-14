@@ -4,7 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import javax.validation.constraints.NotBlank;
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 @Getter
 @Setter
@@ -17,5 +17,5 @@ public class CreateOrder {
     @NotBlank(message = "Product Id can not be empty or null")
     private Integer productId;
     @NotBlank(message = "Delivery Data Id can not be empty or null")
-    private LocalDateTime deliveryData;
+    private LocalDate deliveryData;
 }

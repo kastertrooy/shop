@@ -1,13 +1,17 @@
 package com.example.demo.servise;
 
 import com.example.demo.entity.Product;
+import com.example.demo.entity.ProductImage;
 import com.example.demo.entity.create.CreateProduct;
 import com.example.demo.entity.dto.ProductDto;
 import com.example.demo.entity.update.UpdateProduct;
 import com.example.demo.excaption.BadRequest;
+import com.example.demo.repo.ProductImageRepo;
 import com.example.demo.repo.ProductRepo;
+import com.example.demo.type.ProductStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -18,14 +22,27 @@ import java.util.Optional;
 @Component
 public class ProductService {
     private final ProductRepo productRepo;
+    private final ImageService imageService;
+    private final ProfileService profileService;
+    private final ProductImageRepo productImageRepo;
 
-    public ProductService(ProductRepo productRepo) {
+    public ProductService(ProductRepo productRepo, ImageService imageService, ProfileService profileService, ProductImageRepo productImageRepo) {
         this.productRepo = productRepo;
+        this.imageService = imageService;
+        this.profileService = profileService;
+        this.productImageRepo = productImageRepo;
     }
-
+public Boolean existProduct(Integer id){
+       Optional<Product>optionalProduct = productRepo.findById(id);
+       if (optionalProduct.isEmpty()){
+           throw new BadRequest("Product not found");
+       }
+       else return optionalProduct.get().getProductStatus().equals(ProductStatus.PUBLISHED);
+}
     public ProductDto create(CreateProduct createProduct) {
             Product product = new Product();
         product.setCreateAt(LocalDateTime.now());
+        product.setProductStatus(ProductStatus.CREATED);
         product.setName(createProduct.getName());
         product.setDescription(createProduct.getDescription());
         product.setPrice(createProduct.getPrice());
@@ -45,12 +62,14 @@ public class ProductService {
     }
 
     public Object getAll() {
-        List<Product>products = productRepo.findAll();
-        List<ProductDto>dtoProducts = new ArrayList<>();
+        List<ProductDto>dtos = new ArrayList<>();
+        List<Product> products = productRepo.findProductByVisibleIsTrue();
         for (Product p:products) {
-            dtoProducts.add(returnDto(p));
+            if (p.getProductStatus().equals(ProductStatus.PUBLISHED)){
+                dtos.add(returnDto(p));
+            }
         }
-        return dtoProducts;
+        return dtos;
     }
     private Product getProduct(Integer id){
         Optional<Product> product = productRepo.findById(id);
@@ -90,6 +109,40 @@ public class ProductService {
     }
 
     public Object getAllAdmin() {
-        return productRepo.findAll();
+        if (profileService.isAdmin()){
+            return productRepo.findAll();
+        }
+        throw new BadRequest("Not found");
+    }
+
+    public Object visible(Integer id) {
+        if (!profileService.isAdmin()){
+            throw new BadRequest("Not found :(");
+        }
+        Product product = getProduct(id);
+        product.setProductStatus(ProductStatus.PUBLISHED);
+        product.setVisible(true);
+        productRepo.save(product);
+        return product;
+    }
+    public Object hidden(Integer id) {
+        if (!profileService.isAdmin()){
+            throw new BadRequest("Not found :(");
+        }
+        Product product = getProduct(id);
+        product.setProductStatus(ProductStatus.BLOCKED);
+        product.setVisible(false);
+        productRepo.save(product);
+        return product;
+    }
+
+    public ProductImage saveImage(MultipartFile file, Integer productId) {
+        getProduct(productId);
+        Integer imageId = imageService.create(file);
+        ProductImage productImage = new ProductImage();
+        productImage.setProductId(productId);
+        productImage.setImageId(imageId);
+        productImageRepo.save(productImage);
+        return productImageRepo.findByProductIdAndImageId(productId,imageId);
     }
 }

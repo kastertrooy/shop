@@ -9,7 +9,7 @@ import javax.persistence.*;
 @Setter
 @Entity
 @Table
-public class ProducImage {
+public class ProductImage {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;

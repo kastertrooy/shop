@@ -8,6 +8,7 @@ import com.example.demo.entity.update.EnterEmail;
 import com.example.demo.entity.update.UpdateProfile;
 import com.example.demo.excaption.BadRequest;
 import com.example.demo.repo.ProfileRepo;
+import com.example.demo.securitty.SecurityUtil;
 import com.example.demo.type.ProfileRole;
 import com.example.demo.type.ProfileStatus;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,19 +21,24 @@ import java.util.Date;
 import java.util.Optional;
 
 @Service
-public class ProfilrService {
+public class ProfileService {
     @Value("${serverAddress}")
     private String serverAddress;
+    @Value("${administration.password}")
+    private String administrationPassword;
+    private final SecurityUtil securityUtil;
     @Autowired private JwtTokenFilter jwtToken;
     private final ProfileRepo profileRepo;
     @Autowired private MailSenderService mailSender;
-    //private final PasswordEncoder passwordEncoder;//todo encoder
+    private final PasswordEncoder passwordEncoder;//todo encoder
 
     @Value("${serverAddress}")
     private String serverAddres;
 
-    public ProfilrService(ProfileRepo profileRepo) {
+    public ProfileService(SecurityUtil securityUtil, ProfileRepo profileRepo, PasswordEncoder passwordEncoder) {
+        this.securityUtil = securityUtil;
         this.profileRepo = profileRepo;
+        this.passwordEncoder = passwordEncoder;
     }
 
     public String createProfile(CreateProfile createProfile) {
@@ -44,8 +50,7 @@ public class ProfilrService {
         profile.setName(createProfile.getName());
         profile.setContact(createProfile.getContact());
         profile.setEmail(createProfile.getEmail());
-       // profile.setPassword(passwordEncoder.encode(createProfile.getPassword()));//todo password encoder
-        profile.setPassword(createProfile.getPassword());
+        profile.setPassword(passwordEncoder.encode(createProfile.getPassword()));
         profile.setCreateAt(LocalDateTime.now());
         profile.setProfileStatus(ProfileStatus.INACTIVE);
         profile.setProfileRole(ProfileRole.USER);
@@ -84,8 +89,25 @@ public class ProfilrService {
         }
         return optionalProfile.get();
     }
-    public ProfileDto infoByEmail(String email) {
+    public ProfileDto infoByEmail(String email,String password) {
+        checkEmailPass(email,password);
         return getProfilDto(findProfileByEmail(email));
+    }
+    public Boolean isAdmin(){
+        Profile profile = findProfileById(securityUtil.getUserId());
+        if (profile == null){
+            throw new BadRequest("Profile not found");
+        } else if (profile.getProfileRole().equals(ProfileRole.ADMIN)) {
+            return true;
+        }
+        return false;
+    }
+    private Boolean checkEmailPass(String email,String pass){
+        Profile profile = findProfileByEmail(email);
+        if (passwordEncoder.matches(pass,profile.getPassword())){
+            return true;
+        }
+        throw new BadRequest("Password is wrong!");
     }
 
     private ProfileDto getProfilDto(Profile profile) {
@@ -114,7 +136,7 @@ public class ProfilrService {
 
     public String changeEmail(String oldEmail, String password) {
         Profile profile = findProfileByEmail(oldEmail);
-        if (!profile.getPassword().equals(password)){
+        if (!passwordEncoder.matches(password,profile.getPassword())){
             throw new BadRequest("Password is wrong");
         }
         String token = jwtToken.createTokenForChangeEmail(profile);
@@ -125,10 +147,10 @@ public class ProfilrService {
 
     public String changePassword(String email, ChangePassword changePassword) {
         Profile profile = findProfileByEmail(email);
-        if (!profile.getPassword().equals(changePassword.getOldPassword())){
+        if (!passwordEncoder.matches(changePassword.getOldPassword(),profile.getPassword())){
             throw new BadRequest("Old password is wrong");
         }
-        profile.setPassword(changePassword.getNewPassword());
+        profile.setPassword(passwordEncoder.encode(changePassword.getNewPassword()));
         profileRepo.save(profile);
         return "Password changed";
     }
@@ -142,5 +164,19 @@ public class ProfilrService {
             return "Please confirm your email";
         }
         else throw new BadRequest("Email not delivered!");
+    }
+
+    public String administration(String password, Integer id) {
+        if (!administrationPassword.equals(password)){
+            throw new BadRequest("Password is wrong");
+        }
+
+        Profile profile = findProfileById(id);
+        if (profile.getProfileStatus().equals(ProfileStatus.ACTIVE)){
+            profile.setProfileRole(ProfileRole.ADMIN);
+            profileRepo.save(profile);
+            return "Admin saved";
+        }
+        return "Profile is not active!";
     }
 }

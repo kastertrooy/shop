@@ -1,17 +1,12 @@
-package com.example.demo.entity;
+package com.example.demo.entity.update;
 
 import lombok.Getter;
 import lombok.Setter;
 
-import javax.persistence.*;
 import javax.validation.constraints.NotBlank;
-import java.time.LocalDateTime;
 
-@Getter
-@Setter
-@Entity
-@Table
-public class OrderItems {
+@Setter@Getter
+public class UpdateItems {
     @NotBlank(message = "Order Id can not be empty or null")
     private Integer orderId;
     @NotBlank(message = "Product Id can not be empty or null")
@@ -20,9 +15,4 @@ public class OrderItems {
     private Integer amount;
     @NotBlank(message = "Price can not be empty or null")
     private Double price;
-    private LocalDateTime createAt;
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
-
 }

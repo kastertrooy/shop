@@ -36,7 +36,7 @@ public class ImageService {
         this.imageRepo = iMageRepo;
     }
 
-    public String create(MultipartFile file) {
+    public Integer create(MultipartFile file) {
         try {
             String YMD = getYMD();// year month day
             String type = Objects.requireNonNull(file.getContentType()).split("/")[1];
@@ -55,6 +55,7 @@ public class ImageService {
             throw new BadRequest("File not created");
         }
     }
+
     public String getYMD() {
         int year = Calendar.getInstance().get(Calendar.YEAR);
         int month = Calendar.getInstance().get(Calendar.MONTH);
@@ -63,7 +64,7 @@ public class ImageService {
     }
 
 
-    private String createImage(String ymd, String type, long size, String token) {
+    private Integer createImage(String ymd, String type, long size, String token) {
         Image image = new Image();
         image.setPath(ymd);
         image.setSize(size);
@@ -73,7 +74,7 @@ public class ImageService {
         image.setCreateAt(LocalDateTime.now());
         imageRepo.save(image);
         image = imageRepo.findByToken(token).get();
-      return String.format("ImageId: %s\nURL: %s",image.getId(),image.getUrl());
+      return image.getId();
     }
 
     private void convertImageToDto(Image image, ImageDto imageDto) {
